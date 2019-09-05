@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>FBTA Element Locator</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+    <div id='locatorPopupDiv' class='locatorPopupDiv'>
+        <div id="header">
+            <p>FBTA Element Locator</p>
+
+            <div id="buttonsDiv">
+                <div id='deleteDiv' class="popup_button" title="Delete All">
+                    <i class="fa fa-trash" aria-hidden="true"></i>
+                </div>
+                <div id='hideDiv' class="popup_button" title="Hide">
+                    <i class="fa fa-minus" aria-hidden="true"></i>
+                </div>
+            </div>
+        </div>
+
+        <div id="elementsTable">
+            <table id="elementsTableHeader" class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th width="30px">#</th>
+                        <th width="170px">Label</th>
+                        <th width="85px">Type</th>
+                        <th>Identifier</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+
+            <table id="elementsTableBody" class="table table-sm table-hover">
+                <tbody id='paths'>
+                    <!-- <tr>
+                    <td>value 1</td>
+                    <td>value 2</td>
+                    <td>value 3</td>
+                    <td>value 4</td>
+                    <td>value 5</td>
+					</tr> -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="footer">
+		<div id="btnFooter">
+			<button id="sendDom" title="Send DOM">Send DOM</button>
+			<button id="sendElements" title="Send All">Send Data</button>
+		</div>
+
+		<div id="switchsDiv">
+            <label class="switch">
+			 <input type="checkbox" id="turnOnOffCheckbox">
+			 <span class="slider round" ></span>
+			</label>
+        </div>
+		
+    </div>
+    <script src="scripts/jquery-3.4.1.min.js"></script>
+    <script src="scripts/popper.min.js"></script>
+    <script src="scripts/bootstrap.min.js"></script>
+	<script src="popup.js"></script>
+</body>
+
+</html>

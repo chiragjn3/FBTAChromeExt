@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "name": "FBTA Element Picker",
+  "description": "Element Picker",
+  "icons":
+   {
+      "128": "images/icon128.png",
+	  "48": "images/icon48.png",
+      "16": "images/icon16.png"  
+   },
+  "version": "1.0.0",
+
+  "browser_action": {
+    "default_icon": "images/icon16.png",
+    "default_popup": "popup.html"
+  },
+  
+  
+  "permissions": [ "activeTab" , "storage"],
+  "content_scripts": [
+    {
+		"matches": [ "*://*.wdf.sap.corp/*", "*://*.stackoverflow.com/*"],
+		"js":["scripts/jquery-3.4.1.min.js", "content.js"],
+		"css": ["css/core.css"],
+		"all_frames":  true
+    }
+  ]
+}

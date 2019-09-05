@@ -1,0 +1,52 @@
+ body{ background: linear-gradient(to right, #fbfbfb, #eeeeee); font-family: -apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; font-size: 1rem; font-weight: 400; line-height: 1.5;  }  
+
+#header{ height: 36px; line-height: 36px; width: 100%; top: 0px; left: 0px; position: fixed;  background: #bed2e7; z-index: 1000; color: #346187; padding: 0px 8px; font-size: 18px; border-radius: 0px 0px 0px 0px; user-select: none; cursor: default; } 
+
+#header p{ display: inline-block; }
+.locatorPopupDiv { min-height: 80px; min-width: 520px; }   
+
+#buttonsDiv{ float: right; }  
+.popup_button { display: inline-block; width: 24px; height: 24px; border-radius: 5px; text-align: center; color: 346187; font-size: 16px; cursor: pointer; line-height: 22px; }  
+#hideDiv{ background: #bed2e7; }  
+#hideDiv:hover { background: #9db1c4; }  
+#deleteDiv{ background: #bed2e7;  }  
+#deleteDiv:hover { background: #9db1c4;}  
+
+.tableTd{ text-align: center; padding: 0; vertical-align: middle; } 
+.tableInput1{width:150px; border-color: #bfbfbf; border-style: solid;border-width: 1px 1px 1px 1px; padding-right:4px;padding-left: 2px;}
+.tableInput1:hover { border-color: #346187;} 
+.tableInput2{width:60px; border-color: #bfbfbf; border-style: solid;border-width: 1px 1px 1px 1px; padding-right:4px;padding-left: 2px;}
+.tableInput2:hover { border-color: #346187;} 
+.tableInput3{width:180px; border-color: #bfbfbf; border-style: solid;border-width: 1px 1px 1px 1px; padding-right:4px;padding-left: 2px;}
+.tableInput3:hover { border-color: #346187;} 
+
+#elementsTable{ margin-top: 36px; font-size: small; }  
+#elementsTableHeader > table > thead > tr > th, 
+#elementsTableHeader{ position: fixed; margin-top: -27px; background: #eff4f9; opacity: 0.95; }  
+#elementsTableHeader th{ border-width: 0px 0px 2px 0px; border-color: #d1e0ee; border-style: solid; }  
+#elementsTableBody{ margin-top: 63px; margin-bottom: 40px}
+
+.deleteSingle{display: inline-block; width: 24px; height: 24px; border-radius: 5px; text-align: center; color: #346187; font-size: 16px; cursor: pointer; line-height: 22px;   }  
+.deleteSingle:hover { background: #c4c5c6;} 
+
+#footer{ height: 36px; width: 510px; bottom: 4px; left: 5px; position: fixed; border-radius: 5px;background: #3F5161; z-index: 1000; /* opacity: 0.95; */ }
+ 
+#btnFooter{ position: fixed; right: 80px; bottom: 11px; } 
+#sendElements {width: 80px; height: 24px; border-radius: 4px; text-align: center; color: white; font-size: 14px; background: #5496cd;  border: none;
+  cursor: pointer;} 
+#sendDom {position: fixed; left: 10px; bottom: 11px; width: 80px; height: 24px; border-radius: 4px; text-align: center; color: white; font-size: 14px; background: #5496cd;  border: none;
+  cursor: pointer;}  
+  
+#switchsDiv{ position: fixed; right: 10px; bottom: 3px; }
+.switch {  position: relative;  display: inline-block;  width: 50px;  height: 24px;}
+.switch input {   opacity: 0;  width: 0;  height: 0;}
+
+.slider {  position: absolute;  cursor: pointer;  top: 0;  left: 0;  right: 0;  bottom: 0;  background-color: #ccc;
+  -webkit-transition: .4s;  transition: .4s;}
+
+.slider:before {  position: absolute;  content: "";  height: 17px;  width: 17px;  left: 4px;  bottom: 4px;  background-color: white;   -webkit-transition: .4s;  transition: .4s; font-size: 10px;}
+input:checked + .slider {  background-color: #5496cd;}
+input:checked + .slider:before {  -webkit-transform: translateX(26px);  -ms-transform: translateX(26px);  transform: translateX(26px);}
+
+.slider.round {  border-radius: 24px;}
+.slider.round:before {  border-radius: 50%;}

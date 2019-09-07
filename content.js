@@ -1,51 +1,65 @@
 //Function to get and store keys in chrome storage
-var local = (function(){
+var local = (function()
+{
 
-	//Get from storage
-    var getData = function(key){
-		chrome.storage.local.get(key, function (values) {
-        console.log(key, values);
-		});
+    //Get from storage
+    var getData = function(key)
+    {
+        chrome.storage.local.get(key, function(values)
+        {
+            //console.log(key, values);
+        });
     }
-	
-	var setData = function(key, data){
-		//Add newData to existing data
-		//var stringData = JSON.stringify(data);
-		//console.log("String Data - " + stringData);
-			
-		var jsonData = {};
-		jsonData[key] = data;
-		chrome.storage.local.set(jsonData, function () {
-		//console.log('Saved to storage', key, stringData);
-		});	
-	}
 
-	//Store to storage
-    var updateData = function(key, newData){		
-		//Get already store data
-		chrome.storage.local.get(key, function (values) {
-			//console.log(key, values);	
-			var oldData = "";
-			if (values[key]){	
-				for(k in values){
-					oldData += values[k] + ",";			
-				}
-				//console.log("Old Data - " + oldData);
-			}
-			
-			//Add newData to existing data
-			var stringNewData = JSON.stringify(newData);
-			var updatedData = oldData + stringNewData;
-			//console.log("Updated Data - " + updatedData);
-				
-			var jsonData = {};
-			jsonData[key] = updatedData;
-			chrome.storage.local.set(jsonData, function () {
-			//console.log('Saved to storage', key, updatedData);
-			});			
-		});
-	}
-    return {get:getData,set:setData,update:updateData}
+    var setData = function(key, data)
+    {
+        //Add newData to existing data
+        //var stringData = JSON.stringify(data);
+        //console.log("String Data - " + stringData);
+
+        var jsonData = {};
+        jsonData[key] = data;
+        chrome.storage.local.set(jsonData, function()
+        {
+            //console.log('Saved to storage', key, stringData);
+        });
+    }
+
+    //Store to storage
+    var updateData = function(key, newData)
+    {
+        //Get already store data
+        chrome.storage.local.get(key, function(values)
+        {
+            //console.log(key, values);	
+            var oldData = "";
+            if (values[key])
+            {
+                for (k in values)
+                {
+                    oldData += values[k] + ",";
+                }
+                //console.log("Old Data - " + oldData);
+            }
+
+            //Add newData to existing data
+            var stringNewData = JSON.stringify(newData);
+            var updatedData = oldData + stringNewData;
+            //console.log("Updated Data - " + updatedData);
+
+            var jsonData = {};
+            jsonData[key] = updatedData;
+            chrome.storage.local.set(jsonData, function()
+            {
+                //console.log('Saved to storage', key, updatedData);
+            });
+        });
+    }
+    return {
+        get: getData,
+        set: setData,
+        update: updateData
+    }
 })();
 
 
@@ -54,164 +68,150 @@ var local = (function(){
 //*************************************************************************************
 
 //Listening to Element click event
-$(window).click(function(event) {
-	console.log("Clicked Element - ", event);
-	
-	var key = "toggle";
-	var toggleValue = false;
-	chrome.storage.local.get(key, function (values) {
-		if (values[key]){		
-			//Converting data to array to parse
-			var jsonData = "["+values[key]+"]";		
-			var parsedData = JSON.parse(jsonData);
-			
-			toggleValue = parsedData[0].toggle;
-			//console.log("Toggle Value from content script - " + toggleValue);		
-			
-			if(toggleValue)
-			{
-				var elementID = event.target.id;
-				if(elementID != "")
-				{
-					//var className = event.target.className;
-					//var description = getDescriptionFromID(elementID);
-					getInfoClickedElement(event);	
-					var elementInfo = {'label':elementLabel, 'type':elementType, 'id':elementID};
-					local.update('elements',elementInfo);
-				}
-			}
-		}
-	});
+$(window).click(function(event)
+{
+    console.log("Clicked Element - ", event);
+
+    var key = "toggle";
+    var toggleValue = false;
+    chrome.storage.local.get(key, function(values)
+    {
+        if (values[key])
+        {
+            //Converting data to array to parse
+            var jsonData = "[" + values[key] + "]";
+            var parsedData = JSON.parse(jsonData);
+
+            toggleValue = parsedData[0].toggle;
+            //console.log("Toggle Value from content script - " + toggleValue);		
+
+            if (toggleValue)
+            {
+                if (event.target.id != "")
+                {
+                    //var className = event.target.className;
+                    //var description = getDescriptionFromID(elementID);
+                    var elementInfo = getInfoClickedElement(event);              
+                    local.update('elements', elementInfo);
+                }
+            }
+        }
+    });
 });
 
 //Get label and type of clicked element
-var elementType = "";
-var elementLabel = "";
 function getInfoClickedElement(elementObj)
 {
-	elementType = "";
-	elementLabel = "";
-	
-	try
-	{		
-		var elementID = elementObj.target.id;
-		var className = elementObj.target.className;
+    var elementAction = "";
+	var elementID = "";
+	var elementLabel = "";
+	var elementType = "";
+
+    try
+    {
+        elementID = elementObj.target.id;
+		elementType = getTypeFromElementID(elementObj.target);
 		
-		//Adding backslash as escape character for some special characters in ID 
-		elementID = elementID.replace(/\./g, "\\.");
-		elementID = elementID.replace(/\:/g, "\\:");
+		if(isTagTableElement(elementObj.target))
+		{
+			elementType = "table";
 			
-		//Get only first part of classname
-		className = className.split(" ")[0];	
-		console.log("Clicked element Classname - ", className);
-			
-		if(className === "sapMInputBaseInner" || className === "sapMText")
-		{
-			elementType = "input";
-			if (elementObj.target.labels != null)
-			{
-				if(elementObj.target.labels.length > 0)
-				{
-					//elementLabel = nodes[0].id;	
-					//var findTag = $("bdi");
-					//var nodes =  $("#"+elementID+"").parents().eq(5).find(findTag);		
-					//elementLabel = nodes[0].innerText;
-					elementLabel = elementObj.target.labels[0].outerText;
-				}
-			}
-			else
-			{
-				var ariaLabel = elementObj.target.getAttribute('aria-labelledby');
-				console.log("Clicked element AriaLabel - ", ariaLabel);
-				if(ariaLabel != null)
-				{
-					if(ariaLabel.indexOf(' ') >= 0)
-					{
-						ariaLabel = ariaLabel.split(" ")[1];	
-					}
-					elementLabel = document.getElementById(ariaLabel).innerText;
-				}				
-				
-				var findTag = $("td");
-				var nodes =  $("#"+elementID+"").parents().eq(5).find(findTag);	
-				
-				var xpath = getXPath(elementObj.target);
-				console.log("Clicked element XPath - ", xpath);
-			}					
+			//If clicked element is part of table then find xpath
+			//var elementXPath = getXPath(elementObj.target);
+			//console.log("Clicked element XPath - ", elementXPath);
 		}
-		else if(className === "sapMSFI")
-		{
-			elementLabel = elementObj.target.placeholder;
-			elementType = "input";
-		}
-		else if(className === "sapMBtnDefault" || className === "sapMBtnEmphasized" || className === "sapMBtnHoverable" || className === "sapUshellShellHeadItmCntnt" || className === "sapMBtnInner")
-		{
-			elementType = "button";
-			var findTag = $("bdi");
-			var nodes =  $("#"+elementID+"").parent().find(findTag);
-			if(nodes.length > 0)
-			{
-				elementLabel = nodes[0].innerText;
-			}
-			else
-			{
-				nodes =  $("#"+elementID+"").parent();
-				elementLabel = nodes[0].title;
-			}		
-		}
-		else if(className === "sapMBtnCustomIcon" || className === "sapMBtnContent")
-		{
-			elementType = "button";
-			var findTag = $("bdi");
-			var nodes =  $("#"+elementID+"").parents().eq(1).find(findTag);
-			if(nodes.length > 0)
-			{			
-				elementLabel = nodes[0].innerText;
-			}		
-			else
-			{
-				nodes =   $("#"+elementID+"").parents().eq(1);
-				elementLabel = nodes[0].title;
-			}
-		}
-		else
-		{
-			elementLabel = elementObj.target.innerText;	
-			elementType = elementObj.target.nodeName;
-			if(elementID.includes("btn") || elementID.includes("button"))
-			{
-				elementType = "button";
-			}			
-		}
-		console.log("Clicked element Label - ",elementLabel);
-	}
-	catch(err)
-	{
-		console.log("Error while getting element info is  - ",err.message);
-	}
+	
+        //Adding backslash as escape character for some special characters in ID 
+        var tempElementID = elementID.replace(/\./g, "\\.");
+        tempElementID = tempElementID.replace(/\:/g, "\\:");
+
+        //Get only first part of classname
+		var className = elementObj.target.className;
+        className = className.split(" ")[0];
+        console.log("Clicked element Classname - ", className);
+
+        if (elementObj.target.tagName === "INPUT")
+        {
+            elementAction = "input";
+			elementLabel = getLabelFromElement(elementObj.target);
+        }
+
+        else if (className === "sapMBtnDefault" || className === "sapMBtnEmphasized" || className === "sapMBtnHoverable" || className === "sapUshellShellHeadItmCntnt" || className === "sapMBtnInner")
+        {
+            elementAction = "button";
+            var findTag = $("bdi");
+            var nodes = $("#" + tempElementID + "").parent().find(findTag);
+            if (nodes.length > 0)
+            {
+                elementLabel = nodes[0].innerText;
+            }
+            else
+            {
+                nodes = $("#" + tempElementID + "").parent();
+                elementLabel = nodes[0].title;
+            }
+        }
+        else if (className === "sapMBtnCustomIcon" || className === "sapMBtnContent")
+        {
+            elementAction = "button";
+            var findTag = $("bdi");
+            var nodes = $("#" + tempElementID + "").parents().eq(1).find(findTag);
+            if (nodes.length > 0)
+            {
+                elementLabel = nodes[0].innerText;
+            }
+            else
+            {
+                nodes = $("#" + tempElementID + "").parents().eq(1);
+                elementLabel = nodes[0].title;
+            }
+        }
+        else
+        {
+            elementLabel = elementObj.target.innerText;
+            elementAction = elementObj.target.nodeName;
+
+            if (tempElementID.includes("btn") || tempElementID.includes("button"))
+            {
+                elementAction = "button";
+            }
+        }
+		
+		var elementInfo = {
+                        'action': elementAction,
+                        'id': elementID,
+						'label': elementLabel,
+                        'type': elementType
+        };
+		return elementInfo;
+    }
+    catch (err)
+    {
+        console.log("Error while getting element info is  - ", err.message);
+    }
 }
 
 //Get Xpath of clicked element
-function getXPath(element) 
+function getXPath(element)
 {
-	//console.log("getXPath element", element);
+    //console.log("getXPath element", element);
     if (element.tagName == 'HTML')
         return '/HTML[1]';
-    if (element===document.body)
+    if (element === document.body)
         return '/HTML[1]/BODY[1]';
-	
-	var ix = 0;
-	var siblings= element.parentNode.childNodes;
-	for (var i= 0; i<siblings.length; i++) 
-	{
-		var sibling = siblings[i];		
-		if(element.tagName === "TABLE")			
-			return '//*[@id="'+element.id+'"]';
-		if (sibling === element)
-			return getXPath(element.parentNode)+'/'+element.tagName+'['+(ix+1)+']';
-		if (sibling.nodeType === 1 && sibling.tagName === element.tagName)
-			ix++;
-	}
+
+    var ix = 0;
+    var siblings = element.parentNode.childNodes;
+    for (var i = 0; i < siblings.length; i++)
+    {
+        var sibling = siblings[i];
+        if (element.tagName === "TABLE")
+            return '//*[@id="' + element.id + '"]';
+        if (sibling === element)
+            return getXPath(element.parentNode) + '/' + element.tagName + '[' + (ix + 1) + ']';
+        if (sibling.nodeType === 1 && sibling.tagName === element.tagName)
+            ix++;
+    }
 }
 
 
@@ -250,219 +250,307 @@ function getDescriptionFromID(elementID)
 
 //Function for requesting the DOM parsing
 chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
+    function(request, sender, sendResponse)
+    {
         //console.log(sender.tab ? "from a content script:" + sender.tab.url : "from the extension" + request.greeting);
 
         if (request.greeting == "download")
-		{
-			key = "dom";
-			var body = document.getElementsByTagName("body");
-			console.log("DOM Body in Nodes Format: ", body);
-			
-			var elem = document.getElementById("canvas");
-			console.log("Parsing the Canvas ", elem);
-			
-			jsonDom = "";
-			
-			//getCompleteDomElements(document.body);
-			getCompleteDomElements(elem);
-			
-			jsonDom = jsonDom.substring(1);
-			
-			//console.log("DOM json data - ", jsonDom);
-			local.set(key,jsonDom);
-		}	
-		sendResponse({farewell: "downloadReady"});
-});
+        {
+            key = "dom";
+            var body = document.getElementsByTagName("body");
+            console.log("DOM Body in Nodes Format: ", body);
+
+            var elem = document.getElementById("canvas");
+            console.log("Parsing the Canvas ", elem);
+
+            jsonDom = "";
+
+            //getAllDomElements(document.body);
+            getAllDomElements(elem);
+
+            jsonDom = jsonDom.substring(1);
+
+            //console.log("DOM json data - ", jsonDom);
+            local.set(key, jsonDom);
+        }
+        sendResponse(
+        {
+            farewell: "downloadReady"
+        });
+    });
 
 
+//Get all the required elements available in DOM
 var json = "";
 var jsonTableRow = "";
 var jsonTable = "";
-//Get all the required elements available in DOM	
-function getCompleteDomElements(element){
-	var children = element.childNodes.length;
-	//console.log("Child count", children);
-	
-    for(var i = 0; i < children; i++)
-	{
-        if(element.childNodes[i].nodeType != 3)
-		{					
-			if(element.childNodes[i].style.visibility === "")
-			{
-				if(!isTagTableElement(element))
-				{
-					if(element.childNodes[i].tagName === "INPUT")
-					{	
-						var label = "";
-						var type = "";
+
+function getAllDomElements(element)
+{
+    var children = element.childNodes.length;
+    //console.log("Child count", children);
+
+    for (var i = 0; i < children; i++)
+    {
+        if (element.childNodes[i].nodeType != 3)
+        {
+            if (element.childNodes[i].style.visibility === "")
+            {
+                if (!isTagTableElement(element))
+                {
+                    if (element.childNodes[i].tagName === "INPUT")
+                    {
+						var id = "";
+                        var label = "";
+                        var type = "";
+						var action = "input";
 						
-						//console.log("Node ID" + element.childNodes[i].id);
-						if (element.childNodes[i].labels != null)
-						{
-							var id = element.childNodes[i].id;
-							if(document.getElementById(id).hasAttribute('type'))
+                        //console.log("Node ID" + element.childNodes[i].id);
+                        if (element.childNodes[i].labels != null)
+                        {
+                            id = element.childNodes[i].id;
+							label = getLabelFromElement(element.childNodes[i]);
+							type = getTypeFromElementID(element.childNodes[i]);	
+							
+							if(type === "radio" || type === "CheckBox")
 							{
-								type = element.childNodes[i].getAttribute('type'); 
-								//console.log("Type", type);
-							}
-								
-							if(element.childNodes[i].labels.length > 0)
-							{
-								label = element.childNodes[i].labels[0].outerText;
-								var temp = {'action':'input','id':id,'label':label,'type':type};						
-								var stringData = JSON.stringify(temp);
-								jsonDom = jsonDom + "," + stringData;							
-								//console.log("jsonDom", jsonDom);							
-							}
-							else if(type != "text")
-							{
-								if(element.childNodes[i].title != "")
-								{
-									label = element.childNodes[i].title;
-								}
-								else if(element.childNodes[i].placeholder != "")
-								{
-									label = element.childNodes[i].placeholder;
-								}
-								
-								var temp = {'action':'input','id':id,'label':label,'type':type};						
-								var stringData = JSON.stringify(temp);
-								jsonDom = jsonDom + "," + stringData;							
-								//console.log("jsonDom", jsonDom);							
-							}							
-						}
-					}
-					else if(element.childNodes[i].tagName === "BUTTON")
-					{
-						var id = element.childNodes[i].id;
-						var type = "";
-						var label = "";
+								action = type;
+								type = "";
+							}  
+							
+							var temp = {
+                                    'action': action,
+                                    'id': id,
+                                    'label': label,
+                                    'type': type
+                                };
+							var stringData = JSON.stringify(temp);
+							jsonDom = jsonDom + "," + stringData;
+							//console.log("jsonDom", jsonDom);	
+                        }
+                    }
+                    else if (element.childNodes[i].tagName === "BUTTON")
+                    {
+                        var id = element.childNodes[i].id;
+                        var type = "";
+                        var label = "";
+
+                        if (element.childNodes[i].innerText != "")
+                        {
+                            label = element.childNodes[i].innerText;
+                        }
+                        else
+                        {
+                            label = element.childNodes[i].title;
+                        }
+                        var temp = {
+                            'action': 'button',
+                            'id': id,
+                            'label': label,
+                            'type': type
+                        };
+                        var stringData = JSON.stringify(temp);
+                        jsonDom = jsonDom + "," + stringData;
+                        //console.log("jsonDom", jsonDom);
+                    }
+                    else if (element.childNodes[i].tagName === "A")
+                    {
+                        var id = element.childNodes[i].id;
+                        var type = "link";
+                        var label = element.childNodes[i].title;
+
+                        var temp = {
+                            'action': 'link',
+                            'id': id,
+                            'label': label,
+                            'type': type
+                        };
+                        var stringData = JSON.stringify(temp);
+                        jsonDom = jsonDom + "," + stringData;
+                    }
+                    else if (element.childNodes[i].tagName === "TABLE")
+                    {
+                        jsonTable = "";
+
+                        var tableRows = $(element).find("tbody>tr");
+						//console.log("tr",  tableRows);
 						
-						if(element.childNodes[i].innerText != "")
-						{						
-							label = element.childNodes[i].innerText;						
-						}
-						else
-						{						
-							label = element.childNodes[i].title;											
-						}
-						var temp = {'action':'button','id':id,'label':label,'type':type};						
-						var stringData = JSON.stringify(temp);
-						jsonDom = jsonDom + "," + stringData;
-						//console.log("jsonDom", jsonDom);
-					}
-					else if(element.childNodes[i].tagName === "A")
-					{
-						var id = element.childNodes[i].id;
-						var type = "link";
-						var label = element.childNodes[i].title;
-						
-						var temp = {'action':'link','id':id,'label':label,'type':type};						
-						var stringData = JSON.stringify(temp);
-						jsonDom = jsonDom + "," + stringData;
-					}
-					else if(element.childNodes[i].tagName === "TABLE")
-					{
-						jsonTable = "";
-						
-						var trs = $(element).find("tbody>tr");
-						//console.log("tr",  trs);
-						
-						getTableRows(trs);
-						jsonTable = jsonTable.substring(1);
-						//console.log("jsonTable", jsonTable);
-						
-						if(jsonTable != "")			
-						jsonDom = jsonDom + ",{\"table\" : [" + jsonTable + "]}"; 
-					}
-				}
-			}			
+						var label = getLabelFromAriaLabel(element.childNodes[i]);
+                        
+                        getTableRows(tableRows);
+                        jsonTable = jsonTable.substring(1);
+                        //console.log("jsonTable", jsonTable);
+
+                        if (jsonTable != "")
+                            jsonDom = jsonDom + ",{\"action\":\"Table\",\"label\":\"" + label + "\", \"nodes\" : [" + jsonTable + "]}";
+                    }
+                }
+            }
         }
-		getCompleteDomElements(element.childNodes[i]);
-    }	
+        getAllDomElements(element.childNodes[i]);
+    }
 }
 
 
 //Function to check if element is part of Table Tag
-function isTagTableElement(element) 
+function isTagTableElement(element)
 {
-	if (element.tagName === 'HTML')
+    if (element.tagName === 'HTML')
         return false;
-	else if(element.tagName === "TABLE")			
-		return true;
-	else
-		return isTagTableElement(element.parentNode);
+    else if (element.tagName === "TABLE")
+        return true;
+    else
+        return isTagTableElement(element.parentNode);
 }
 
 
 //Function to parse all rows of table
 function getTableRows(element)
 {
-	for(var i = 0; i < element.length; i++)
-	{
-		jsonTableRow = "";
-		var sibling = element[i];
-		getTableColumns(sibling.childNodes);
+	var rowCount = 1;
+    for (var i = 0; i < element.length; i++)
+    {
+        jsonTableRow = "";
+        var sibling = element[i];
+        getTableColumns(sibling.childNodes);
+
+        jsonTableRow = jsonTableRow.substring(1);
+        if (jsonTableRow != "")
+            jsonTable = jsonTable + ",{\"action\":\"Row\",\"label\":\"" + rowCount + "\", \"nodes\" : [" + jsonTableRow + "]}";
 		
-		jsonTableRow = jsonTableRow.substring(1);
-		if(jsonTableRow != "")			
-			jsonTable = jsonTable + ",{\"tr\" : [" + jsonTableRow + "]}"; 
-	}
+		rowCount++;
+    }
 }
 
-
-//Function to parse all columns of row
+//Recursively get all columns of row
 function getTableColumns(element)
 {
-	var id = "";
-	var label = "";
-	var action = "";
-	var type = "";
+    var id = "";
+    var label = "";
+    var action = "";
+    var type = "";
 
-    for(var i = 0; i < element.length; i++)
-	{
-		var sibling = element[i];
-		
-		if(sibling.tagName === "INPUT")
-		{
-			id = sibling.id;
-			//console.log("input id", sibling.id);
+    for (var i = 0; i < element.length; i++)
+    {
+        var sibling = element[i];
+
+        if (sibling.tagName === "INPUT")
+        {
+            id = sibling.id;
+			label = getLabelFromAriaLabel(sibling);
+			action = "input";
+            type = getTypeFromElementID(sibling);
 			
-			if(document.getElementById(sibling.id).hasAttribute('aria-labelledby'))
+			if(type === "radio" || type === "CheckBox")
 			{
-				var ariaLabel = sibling.getAttribute('aria-labelledby'); 
-				if(ariaLabel.indexOf(' ') >= 0)
-				{
-					ariaLabel = ariaLabel.split(" ")[1];	
-				}
-				label = document.getElementById(ariaLabel).innerText;
-				//console.log("Label", label);
+				action = type;	
 			}
-			if(document.getElementById(sibling.id).hasAttribute('type'))
-			{
-				type = sibling.getAttribute('type'); 
-				//console.log("Type", type);
-			}
+			type = "table";
 			
-			var temp = {'action':'input','id':id,'label':label,'type':type};
-			var stringData = JSON.stringify(temp);
-			jsonTableRow = jsonTableRow + "," + stringData;				
-		}		
-		else if(sibling.tagName === "A")
-		{
-			var id = sibling.id;
-			var type = "link";
-			var label = sibling.innerText;
-			
-			var temp = {'action':'link','id':id,'label':label,'type':type};						
-			var stringData = JSON.stringify(temp);
-			jsonTableRow = jsonTableRow + "," + stringData;
-		}		
-		getTableColumns(sibling.childNodes);		
-	}
+            var temp = {
+                'action': action,
+                'id': id,
+                'label': label,
+                'type': type
+            };
+            var stringData = JSON.stringify(temp);
+            jsonTableRow = jsonTableRow + "," + stringData;
+        }
+        else if (sibling.tagName === "A")
+        {
+            var id = sibling.id;
+            var type = "link";
+            var label = sibling.innerText;
+
+            var temp = {
+                'action': 'link',
+                'id': id,
+                'label': label,
+                'type': type
+            };
+            var stringData = JSON.stringify(temp);
+            jsonTableRow = jsonTableRow + "," + stringData;
+        }
+        getTableColumns(sibling.childNodes);
+    }
 }
 
+
+//
+function getTypeFromElementID(element)
+{
+	var type = "";
+	if (document.getElementById(element.id).hasAttribute('type'))
+	{
+		type = element.getAttribute('type');
+		//console.log("Element Type - ", type);
+	}
+	return type;
+}
+
+
+//Function to get Label from element
+function getLabelFromElement(element)
+{
+	var label = "";
+	//Find the label of clicked element
+	if (element.labels != null && element.labels.length > 0)
+	{
+		label = element.labels[0].outerText;
+	}
+	else
+	{
+		label = getLabelFromAriaLabel(element);  
+	}
+	
+	//If not able to find label by above methods
+	if(label === "")
+	{
+		if (element.title != "")
+		{
+			label = element.title;
+		}
+		else if (element.placeholder != "")
+		{
+			label = element.placeholder;
+		}
+	}
+	return label;
+}
+
+
+//Function to get label from aria-labelledby
+function getLabelFromAriaLabel(element)
+{
+	var label = ""; 
+	if (document.getElementById(element.id).hasAttribute('aria-labelledby'))
+	{
+		var ariaLabel = element.getAttribute('aria-labelledby');
+		
+		if (ariaLabel.indexOf(' ') >= 0)
+		{
+			ariaLabel = ariaLabel.split(" ");
+			for (i = 0; i < ariaLabel.length; i++) 
+			{
+				if(document.getElementById(ariaLabel[i]) != null)
+				{
+					label = document.getElementById(ariaLabel[i]).innerText;
+					if(label != "")
+					{
+						label = label.split("\n")[0];
+						break;
+					}
+				}
+			}				
+		}
+		else
+		{
+			label = document.getElementById(ariaLabel).innerText;
+		}
+		//console.log("Label from aria labe is - ", label);
+	}
+	return label;
+}
 
 //Recursively get the table elements xpath
 /*
@@ -543,46 +631,52 @@ var MOUSE_VISITED_CLASSNAME = 'crx_mouse_visited';
 var prevDOM = null;
 
 // Mouse listener for any move event on the current document.
-document.addEventListener('mousemove', function (e) {
-	try {
-		var key = "toggle";
-		var toggleValue = false;
-		chrome.storage.local.get(key, function (values) {
-			if (values[key]){	
-				//console.log(values[key]);
-				
-				//Converting data to array to parse
-				var jsonData = "["+values[key]+"]";		
-				var parsedData = JSON.parse(jsonData);			
-				toggleValue = parsedData[0].toggle;		
-			
-				if(toggleValue)
-				{
-					var srcElement = e.srcElement;
+document.addEventListener('mousemove', function(e)
+{
+    try
+    {
+        var key = "toggle";
+        var toggleValue = false;
+        chrome.storage.local.get(key, function(values)
+        {
+            if (values[key])
+            {
+                //console.log(values[key]);
 
-					// Remove the class name as we will be styling the new one after.
-					if (prevDOM != null) {
-					  prevDOM.classList.remove(MOUSE_VISITED_CLASSNAME);
-					}
+                //Converting data to array to parse
+                var jsonData = "[" + values[key] + "]";
+                var parsedData = JSON.parse(jsonData);
+                toggleValue = parsedData[0].toggle;
 
-					// Add a visited class name to the element. So we can style it.
-					srcElement.classList.add(MOUSE_VISITED_CLASSNAME);
+                if (toggleValue)
+                {
+                    var srcElement = e.srcElement;
 
-					// The current element is now the previous. So we can remove the class
-					// during the next iteration.
-					prevDOM = srcElement;
-				}
-				else
-				{
-					if (prevDOM != null) 
-					{
-					  prevDOM.classList.remove(MOUSE_VISITED_CLASSNAME);
-					}
-				}
-			}		
-		});	
-	}
-	catch(err) {
-		console.log(err.message);
-	}
+                    // Remove the class name as we will be styling the new one after.
+                    if (prevDOM != null)
+                    {
+                        prevDOM.classList.remove(MOUSE_VISITED_CLASSNAME);
+                    }
+
+                    // Add a visited class name to the element. So we can style it.
+                    srcElement.classList.add(MOUSE_VISITED_CLASSNAME);
+
+                    // The current element is now the previous. So we can remove the class
+                    // during the next iteration.
+                    prevDOM = srcElement;
+                }
+                else
+                {
+                    if (prevDOM != null)
+                    {
+                        prevDOM.classList.remove(MOUSE_VISITED_CLASSNAME);
+                    }
+                }
+            }
+        });
+    }
+    catch (err)
+    {
+        console.log(err.message);
+    }
 }, false);

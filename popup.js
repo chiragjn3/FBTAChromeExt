@@ -37,7 +37,7 @@ function addElementsToPopup() {
 				var input2 = document.createElement("input");
 				input2.setAttribute("class","tableInput2");
 				input2.type = "text";
-				input2.value = parsedData[k].type;
+				input2.value = parsedData[k].action;
 				
 				//Adding id to column 3
 				var input3 = document.createElement("input");
@@ -82,9 +82,9 @@ function addElementsToPopup() {
 	});
 }
 
-//
+//Function to delete single element
 $(window).click(function(event) {
-	console.log("Click event: ", event);
+	//console.log("Click event: ", event);
 	var id = event.target.id;
 	if(id.startsWith("deleteSingle_"))
 	{
@@ -95,28 +95,33 @@ $(window).click(function(event) {
 
 //Delete all elements from popup
 function deleteElementsFromPopup() { 
-	var e = document.getElementById('elementsTableBody'); 
+	var e = document.getElementById('paths'); 
 	
 	//e.firstElementChild can be used. 
 	var child = e.lastElementChild;  
 	while (child) { 
-		console.log("Removing all elements child - ",child);
+		//console.log("Removing all elements child - ", child);
 		e.removeChild(child); 
 		child = e.lastElementChild; 
-	}
+	}	
+} 
 
+//Delete all elements from storage
+function deleteElementsFromStorage()
+{
 	chrome.storage.local.remove("elements",function(){
 		var error = chrome.runtime.lastError;
 		if (error) {
 			console.error(error);
 		}
-	});		
-} 
+	});	
+}
 
 
 //Delete element from popup
 function deleteElementFromPopup(id) { 
-	var idNumber = id.match(/\d/g);
+	var idNumber = id.replace(/\D/g, "");
+	console.log("Delete ID - ", idNumber);
 	document.getElementById("trRow_"+idNumber+"").remove(); 
 
 	var key = "elements";
@@ -190,7 +195,7 @@ window.onload = function(){
 							//console.log("DOM",values[key]);
 							
 							//Converting data to array to parse
-							var jsonData = "["+values[key]+"]";	
+							var jsonData = "{\"items\":["+values[key]+"]}";	
 							var parsedData = JSON.parse(jsonData);			
 							
 							//indentation in json format, human readable
@@ -211,9 +216,7 @@ window.onload = function(){
 								console.error(error);
 							}
 						});
-					});
-					
-						
+					});					
 				}
 			});
 		});
@@ -224,7 +227,7 @@ window.onload = function(){
 //
 document.getElementById('hideDiv').onclick=function(event)
 {
-	close()
+	close();
 };
 
 
@@ -235,6 +238,7 @@ document.getElementById('deleteDiv').onclick=function(event){
 		return
 	}
 	deleteElementsFromPopup();
+	deleteElementsFromStorage();
 };
 
 
@@ -272,7 +276,8 @@ window.addEventListener('DOMContentLoaded', function () {
 	  
 		if(!toggleValue){
 			document.getElementById("sendElements").style.display="none";
-			deleteElementsFromPopup();			
+			deleteElementsFromPopup();
+			deleteElementsFromStorage();			
 		}
 		else
 		{

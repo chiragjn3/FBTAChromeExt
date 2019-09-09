@@ -118,7 +118,7 @@ function deleteElementsFromStorage()
 }
 
 
-//Delete element from popup
+//Delete single element from popup
 function deleteElementFromPopup(id) { 
 	var idNumber = id.replace(/\D/g, "");
 	console.log("Delete ID - ", idNumber);
@@ -157,7 +157,7 @@ function deleteElementFromPopup(id) {
 }
 
 	
-//On click event of Send Data button
+//On click event of Send Data and Send Dom button
 window.onload = function(){
 	document.getElementById("sendElements").onclick = function() {				
 		var key = "elements";
@@ -182,7 +182,7 @@ window.onload = function(){
 		});
 	}
 	
-	
+	//Send DOM button on popup
 	document.getElementById("sendDom").onclick = function() {		
 		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 			chrome.tabs.sendMessage(tabs[0].id, {greeting: "download"}, function(response) {
@@ -224,14 +224,14 @@ window.onload = function(){
 };
 
 
-//
+//Hide the popup
 document.getElementById('hideDiv').onclick=function(event)
 {
 	close();
 };
 
 
-//
+//Delete all element from popup
 document.getElementById('deleteDiv').onclick=function(event){
 	if(confirm("Do you really want to delete all elements?")==!1)
 	{

@@ -64,7 +64,7 @@ var local = (function()
 
 
 //*************************************************************************************
-//********************Methods for the Single Element Picker Starts*********************
+//********************Methods for the Single Element Picker ***************************
 //*************************************************************************************
 
 //Listening to Element click event
@@ -87,13 +87,8 @@ $(window).click(function(event)
 
             if (toggleValue)
             {
-                if (event.target.id != "")
-                {
-                    //var className = event.target.className;
-                    //var description = getDescriptionFromID(elementID);
-                    var elementInfo = getInfoClickedElement(event);              
-                    local.update('elements', elementInfo);
-                }
+				var elementInfo = getInfoClickedElement(event);              
+				local.update('elements', elementInfo);
             }
         }
     });
@@ -108,73 +103,77 @@ function getInfoClickedElement(elementObj)
 	var elementType = "";
 
     try
-    {
-        elementID = elementObj.target.id;
-		elementType = getTypeFromElementID(elementObj.target);
+    {	
+		//Find more relevant element either parent or child
+		var updatedElement = findElement(elementObj.target);
+		console.log("updatedElement - ", updatedElement);
 		
-		if(isTagTableElement(elementObj.target))
+		if(updatedElement != null && updatedElement.id != "")
 		{
-			elementType = "table";
+			console.log("Inside Updated Element");
+			elementID = updatedElement.id;
+			elementType = getTypeFromElement(updatedElement);
+
+			if (updatedElement.tagName === "INPUT")
+			{
+				elementAction = "input";		
+				elementLabel = getLabelFromElement(updatedElement);
+			}
+			else if(updatedElement.tagName === "BUTTON")
+			{
+				elementAction = "button";
+				if (updatedElement.innerText != "")
+				{
+					elementLabel = updatedElement.innerText;
+				}
+				else
+				{
+					elementLabel = updatedElement.title;
+				}
+			}
+			if (updatedElement.tagName === "A")
+			{
+				elementAction = "link";		
+				elementLabel = updatedElement.title;
+			}
 			
-			//If clicked element is part of table then find xpath
-			//var elementXPath = getXPath(elementObj.target);
-			//console.log("Clicked element XPath - ", elementXPath);
+			//If element type is radio or checkbox then change action to type
+			if(elementType === "radio" || elementType === "CheckBox")
+			{
+				elementAction = elementType;
+				elementType = "";
+			} 	
+			if(isTagTableElement(updatedElement))
+			{
+				elementType = "table";
+			}
 		}
-	
-        //Adding backslash as escape character for some special characters in ID 
-        var tempElementID = elementID.replace(/\./g, "\\.");
-        tempElementID = tempElementID.replace(/\:/g, "\\:");
-
-        //Get only first part of classname
-		var className = elementObj.target.className;
-        className = className.split(" ")[0];
-        console.log("Clicked element Classname - ", className);
-
-        if (elementObj.target.tagName === "INPUT")
+		else
         {
-            elementAction = "input";
-			elementLabel = getLabelFromElement(elementObj.target);
-        }
+			console.log("Inside Else");
+			elementID = elementObj.target.id;
+			
+			var updatedSpanElement = findSpanElement(elementObj.target.childNodes);
+			console.log("updated SPAN Element - ", updatedSpanElement);
+			
+			if(updatedSpanElement != null && updatedSpanElement.id != "")
+			{
+				elementID = updatedSpanElement.id;
+				elementLabel = updatedSpanElement.innerText;
+				elementAction = updatedSpanElement.tagName;
+				elementType = getTypeFromElement(updatedSpanElement);
+			}
+			else if(elementID != "")
+			{
+				elementLabel = elementObj.target.innerText;
+				elementAction = elementObj.target.tagName;
+				elementType = getTypeFromElement(elementObj.target);
+			}
 
-        else if (className === "sapMBtnDefault" || className === "sapMBtnEmphasized" || className === "sapMBtnHoverable" || className === "sapUshellShellHeadItmCntnt" || className === "sapMBtnInner")
-        {
-            elementAction = "button";
-            var findTag = $("bdi");
-            var nodes = $("#" + tempElementID + "").parent().find(findTag);
-            if (nodes.length > 0)
-            {
-                elementLabel = nodes[0].innerText;
-            }
-            else
-            {
-                nodes = $("#" + tempElementID + "").parent();
-                elementLabel = nodes[0].title;
-            }
-        }
-        else if (className === "sapMBtnCustomIcon" || className === "sapMBtnContent")
-        {
-            elementAction = "button";
-            var findTag = $("bdi");
-            var nodes = $("#" + tempElementID + "").parents().eq(1).find(findTag);
-            if (nodes.length > 0)
-            {
-                elementLabel = nodes[0].innerText;
-            }
-            else
-            {
-                nodes = $("#" + tempElementID + "").parents().eq(1);
-                elementLabel = nodes[0].title;
-            }
-        }
-        else
-        {
-            elementLabel = elementObj.target.innerText;
-            elementAction = elementObj.target.nodeName;
-
-            if (tempElementID.includes("btn") || tempElementID.includes("button"))
-            {
-                elementAction = "button";
-            }
+			if(isTagTableElement(elementObj.target))
+			{
+				elementType = "table";
+			} 
         }
 		
 		var elementInfo = {
@@ -191,61 +190,9 @@ function getInfoClickedElement(elementObj)
     }
 }
 
-//Get Xpath of clicked element
-function getXPath(element)
-{
-    //console.log("getXPath element", element);
-    if (element.tagName == 'HTML')
-        return '/HTML[1]';
-    if (element === document.body)
-        return '/HTML[1]/BODY[1]';
-
-    var ix = 0;
-    var siblings = element.parentNode.childNodes;
-    for (var i = 0; i < siblings.length; i++)
-    {
-        var sibling = siblings[i];
-        if (element.tagName === "TABLE")
-            return '//*[@id="' + element.id + '"]';
-        if (sibling === element)
-            return getXPath(element.parentNode) + '/' + element.tagName + '[' + (ix + 1) + ']';
-        if (sibling.nodeType === 1 && sibling.tagName === element.tagName)
-            ix++;
-    }
-}
-
-
-/*
-//Get element descripton from element ID
-function getDescriptionFromID(elementID)
-{
-	var result = elementID.split("::");
-	
-	//Get the splitted data after 2 item in array and join remaining items
-	result = result.splice(2,).join(" ");
-	
-	//Remove the application name from string and remove all special characters
-	var description = result.split("--")[1];
-	description = description.replace(/[^A-Z0-9]+/ig, " ");
-	
-	//Remove some unwanted values from the description
-	var deleteValues = ["content","CbBg","img","bdi","BDI","inner","Basic"];
-	for (i = 0; i < deleteValues.length; i++)
-	{
-		description = description.replace(deleteValues[i]," ");
-	}	
-	console.log(description);
-	return description;
-}
-*/
-//*************************************************************************************
-//********************Methods for the Single Element Picker Ends***********************
-//*************************************************************************************
-
-
 
 //*************************************************************************************
-//********************Methods for the DOM Parsing Starts*******************************
+//********************Methods for the DOM Parsing *************************************
 //*************************************************************************************
 
 //Function for requesting the DOM parsing
@@ -281,36 +228,36 @@ chrome.runtime.onMessage.addListener(
 
 
 //Get all the required elements available in DOM
-var json = "";
-var jsonTableRow = "";
+var jsonDom = "";
 var jsonTable = "";
-
+var jsonTableRow = "";
 function getAllDomElements(element)
 {
-    var children = element.childNodes.length;
-    //console.log("Child count", children);
-
-    for (var i = 0; i < children; i++)
+	try
     {
-        if (element.childNodes[i].nodeType != 3)
-        {
-            if (element.childNodes[i].style.visibility === "")
-            {
-                if (!isTagTableElement(element))
-                {
-                    if (element.childNodes[i].tagName === "INPUT")
-                    {
+		var children = element.childNodes.length;
+		//console.log("Child count", children);
+
+		for (var i = 0; i < children; i++)
+		{
+			var sibling = element.childNodes[i];
+			if (sibling.nodeType != 3 && sibling.style.visibility === "")
+			{
+				if (!isTagTableElement(element))
+				{
+					if (sibling.tagName === "INPUT")
+					{
 						var id = "";
-                        var label = "";
-                        var type = "";
+						var label = "";
+						var type = "";
 						var action = "input";
 						
-                        //console.log("Node ID" + element.childNodes[i].id);
-                        if (element.childNodes[i].labels != null)
-                        {
-                            id = element.childNodes[i].id;
-							label = getLabelFromElement(element.childNodes[i]);
-							type = getTypeFromElementID(element.childNodes[i]);	
+						//console.log("Node ID" + sibling.id);
+						if (sibling.labels != null)
+						{
+							id = sibling.id;
+							label = getLabelFromElement(sibling);
+							type = getTypeFromElement(sibling);	
 							
 							if(type === "radio" || type === "CheckBox")
 							{
@@ -318,78 +265,182 @@ function getAllDomElements(element)
 								type = "";
 							}  
 							
+							//If label is empty then do not add input, but if it is checkbox or radio then add it.
+							if(label != "" || action === "radio" || action === "CheckBox")
+							{
+								var temp = {
+										'action': action,
+										'id': id,
+										'label': label,
+										'type': type
+									};
+								var stringData = JSON.stringify(temp);
+								jsonDom = jsonDom + "," + stringData;
+								//console.log("jsonDom", jsonDom);	
+							}
+						}
+					}
+					else if (sibling.tagName === "BUTTON")
+					{
+						var id = sibling.id;
+						var type = "";
+						var label = "";
+
+						if (sibling.innerText != "")
+						{
+							label = sibling.innerText;
+						}
+						else
+						{
+							label = sibling.title;
+						}
+						
+						//If label is empty then do not get button
+						if(label != "")
+						{
 							var temp = {
-                                    'action': action,
-                                    'id': id,
-                                    'label': label,
-                                    'type': type
-                                };
+								'action': 'button',
+								'id': id,
+								'label': label,
+								'type': type
+							};
 							var stringData = JSON.stringify(temp);
 							jsonDom = jsonDom + "," + stringData;
-							//console.log("jsonDom", jsonDom);	
-                        }
-                    }
-                    else if (element.childNodes[i].tagName === "BUTTON")
-                    {
-                        var id = element.childNodes[i].id;
-                        var type = "";
-                        var label = "";
+							//console.log("jsonDom", jsonDom);
+						}
+					}
+					else if (sibling.tagName === "A")
+					{
+						var id = sibling.id;
+						var type = "link";
+						var label = sibling.title;
 
-                        if (element.childNodes[i].innerText != "")
-                        {
-                            label = element.childNodes[i].innerText;
-                        }
-                        else
-                        {
-                            label = element.childNodes[i].title;
-                        }
-                        var temp = {
-                            'action': 'button',
-                            'id': id,
-                            'label': label,
-                            'type': type
-                        };
-                        var stringData = JSON.stringify(temp);
-                        jsonDom = jsonDom + "," + stringData;
-                        //console.log("jsonDom", jsonDom);
-                    }
-                    else if (element.childNodes[i].tagName === "A")
-                    {
-                        var id = element.childNodes[i].id;
-                        var type = "link";
-                        var label = element.childNodes[i].title;
+						var temp = {
+							'action': 'link',
+							'id': id,
+							'label': label,
+							'type': type
+						};
+						var stringData = JSON.stringify(temp);
+						jsonDom = jsonDom + "," + stringData;
+					}
+					else if (sibling.tagName === "TABLE")
+					{
+						jsonTable = "";
 
-                        var temp = {
-                            'action': 'link',
-                            'id': id,
-                            'label': label,
-                            'type': type
-                        };
-                        var stringData = JSON.stringify(temp);
-                        jsonDom = jsonDom + "," + stringData;
-                    }
-                    else if (element.childNodes[i].tagName === "TABLE")
-                    {
-                        jsonTable = "";
-
-                        var tableRows = $(element).find("tbody>tr");
+						var tableRows = $(element).find("tbody>tr");
 						//console.log("tr",  tableRows);
 						
-						var label = getLabelFromAriaLabel(element.childNodes[i]);
-                        
-                        getTableRows(tableRows);
-                        jsonTable = jsonTable.substring(1);
-                        //console.log("jsonTable", jsonTable);
+						var label = getLabelFromAriaLabel(sibling);
+						
+						getTableRows(tableRows);
+						jsonTable = jsonTable.substring(1);
+						//console.log("jsonTable", jsonTable);
 
-                        if (jsonTable != "")
-                            jsonDom = jsonDom + ",{\"action\":\"Table\",\"label\":\"" + label + "\", \"nodes\" : [" + jsonTable + "]}";
-                    }
-                }
-            }
-        }
-        getAllDomElements(element.childNodes[i]);
+						if (jsonTable != "")
+							jsonDom = jsonDom + ",{\"action\":\"Table\",\"label\":\"" + label + "\", \"nodes\" : [" + jsonTable + "]}";
+					}
+				}
+			}
+			getAllDomElements(sibling);
+		}
+	}
+    catch (err)
+    {
+        console.log("Error while getting all dom elements is  - ", err.message);
     }
 }
+
+
+//Function to parse all rows of table
+function getTableRows(element)
+{
+	try
+	{
+		var rowCount = 1;
+		for (var i = 0; i < element.length; i++)
+		{
+			jsonTableRow = "";
+			var sibling = element[i];
+			getTableColumns(sibling.childNodes);
+
+			jsonTableRow = jsonTableRow.substring(1);
+			if (jsonTableRow != "")
+				jsonTable = jsonTable + ",{\"action\":\"Row\",\"label\":\"" + rowCount + "\", \"nodes\" : [" + jsonTableRow + "]}";
+			
+			rowCount++;
+		}
+	}
+    catch (err)
+    {
+        console.log("Function getTableRows error - ", err.message);
+    }
+}
+
+
+//Recursively get all columns of row
+function getTableColumns(element)
+{
+	try
+	{
+		var id = "";
+		var label = "";
+		var action = "";
+		var type = "";
+
+		for (var i = 0; i < element.length; i++)
+		{
+			var sibling = element[i];
+
+			if (sibling.tagName === "INPUT")
+			{
+				id = sibling.id;
+				label = getLabelFromAriaLabel(sibling);
+				action = "input";
+				type = getTypeFromElement(sibling);
+				
+				if(type === "radio" || type === "CheckBox")
+				{
+					action = type;	
+				}
+				type = "table";
+				
+				var temp = {
+					'action': action,
+					'id': id,
+					'label': label,
+					'type': type
+				};
+				var stringData = JSON.stringify(temp);
+				jsonTableRow = jsonTableRow + "," + stringData;
+			}
+			else if (sibling.tagName === "A")
+			{
+				var id = sibling.id;
+				type = "table";
+				var label = sibling.innerText;
+
+				var temp = {
+					'action': 'link',
+					'id': id,
+					'label': label,
+					'type': type
+				};
+				var stringData = JSON.stringify(temp);
+				jsonTableRow = jsonTableRow + "," + stringData;
+			}
+			getTableColumns(sibling.childNodes);
+		}
+	}
+    catch (err)
+    {
+        console.log("Function getTableColumns error - ", err.message);
+    }
+}
+
+//*************************************************************************************
+//********************Helper Methods***************************************************
+//*************************************************************************************
 
 
 //Function to check if element is part of Table Tag
@@ -403,87 +454,92 @@ function isTagTableElement(element)
         return isTagTableElement(element.parentNode);
 }
 
-
-//Function to parse all rows of table
-function getTableRows(element)
+//function to find child or parent relevant element
+function findElement(element)
 {
-	var rowCount = 1;
-    for (var i = 0; i < element.length; i++)
-    {
-        jsonTableRow = "";
-        var sibling = element[i];
-        getTableColumns(sibling.childNodes);
-
-        jsonTableRow = jsonTableRow.substring(1);
-        if (jsonTableRow != "")
-            jsonTable = jsonTable + ",{\"action\":\"Row\",\"label\":\"" + rowCount + "\", \"nodes\" : [" + jsonTableRow + "]}";
-		
-		rowCount++;
-    }
+	var tag = "";
+	if(element.childNodes.length > 0)
+	{
+		tag = findChildElement(element.childNodes);
+	}
+	if(tag === null || tag === "")
+	{
+		tag = findParentElement(element);
+	}
+	return tag;
 }
 
-//Recursively get all columns of row
-function getTableColumns(element)
+//function to find parent relevant element
+function findParentElement(element)
 {
-    var id = "";
-    var label = "";
-    var action = "";
-    var type = "";
-
-    for (var i = 0; i < element.length; i++)
-    {
-        var sibling = element[i];
-
-        if (sibling.tagName === "INPUT")
-        {
-            id = sibling.id;
-			label = getLabelFromAriaLabel(sibling);
-			action = "input";
-            type = getTypeFromElementID(sibling);
-			
-			if(type === "radio" || type === "CheckBox")
-			{
-				action = type;	
-			}
-			type = "table";
-			
-            var temp = {
-                'action': action,
-                'id': id,
-                'label': label,
-                'type': type
-            };
-            var stringData = JSON.stringify(temp);
-            jsonTableRow = jsonTableRow + "," + stringData;
-        }
-        else if (sibling.tagName === "A")
-        {
-            var id = sibling.id;
-            var type = "link";
-            var label = sibling.innerText;
-
-            var temp = {
-                'action': 'link',
-                'id': id,
-                'label': label,
-                'type': type
-            };
-            var stringData = JSON.stringify(temp);
-            jsonTableRow = jsonTableRow + "," + stringData;
-        }
-        getTableColumns(sibling.childNodes);
-    }
+	//console.log("parent - ",element.tagName);
+    if (element.tagName === 'HTML')
+        return null;
+	else if (element.tagName === "INPUT")
+        return element;
+    else if (element.tagName === "BUTTON")
+        return element;
+	else if (element.tagName === "A")
+        return element;
+    else
+        return findParentElement(element.parentNode);
 }
 
+//function to find child relevant element
+function findChildElement(element)
+{
+	for (var i = 0; i < element.length; i++)
+	{
+		var sibling = element[i];
+		if (sibling.nodeType != 3)
+		{
+			//console.log("child - ",sibling.tagName);
+			if (sibling.tagName === "INPUT")
+				return sibling;
+			else
+				return findChildElement(sibling.childNodes);
+		}
+		else
+		{
+			return null;
+		}
+	}
+	return null;
+}
 
-//
-function getTypeFromElementID(element)
+//Function to find SPAN in clicked element
+function findSpanElement(element)
+{
+	console.log("Span Element", element);
+	for (var i = 0; i < element.length; i++)
+	{
+		var sibling = element[i];
+		if (sibling.nodeType != 3)
+		{
+			console.log("child span - ",sibling.tagName);
+			if (sibling.tagName === "SPAN")
+				return sibling;
+			else
+				return findSpanElement(sibling.childNodes);
+		}
+		else
+		{
+			return null;
+		}
+	}
+	return null;
+}
+
+//Function to get type from element
+function getTypeFromElement(element)
 {
 	var type = "";
+	console.log("Element - ",element);
+	console.log("Element id - ",element.id);
 	if (document.getElementById(element.id).hasAttribute('type'))
 	{
 		type = element.getAttribute('type');
-		//console.log("Element Type - ", type);
+		console.log("Element Type - ", type);
 	}
 	return type;
 }
@@ -518,7 +574,6 @@ function getLabelFromElement(element)
 	return label;
 }
 
-
 //Function to get label from aria-labelledby
 function getLabelFromAriaLabel(element)
 {
@@ -552,8 +607,54 @@ function getLabelFromAriaLabel(element)
 	return label;
 }
 
-//Recursively get the table elements xpath
 /*
+//Get Xpath of clicked element
+function getXPath(element)
+{
+    //console.log("getXPath element", element);
+    if (element.tagName == 'HTML')
+        return '/HTML[1]';
+    if (element === document.body)
+        return '/HTML[1]/BODY[1]';
+
+    var ix = 0;
+    var siblings = element.parentNode.childNodes;
+    for (var i = 0; i < siblings.length; i++)
+    {
+        var sibling = siblings[i];
+        if (element.tagName === "TABLE")
+            return '//*[@id="' + element.id + '"]';
+        if (sibling === element)
+            return getXPath(element.parentNode) + '/' + element.tagName + '[' + (ix + 1) + ']';
+        if (sibling.nodeType === 1 && sibling.tagName === element.tagName)
+            ix++;
+    }
+}
+
+//Get element descripton from element ID
+function getDescriptionFromID(elementID)
+{
+	var result = elementID.split("::");
+	
+	//Get the splitted data after 2 item in array and join remaining items
+	result = result.splice(2,).join(" ");
+	
+	//Remove the application name from string and remove all special characters
+	var description = result.split("--")[1];
+	description = description.replace(/[^A-Z0-9]+/ig, " ");
+	
+	//Remove some unwanted values from the description
+	var deleteValues = ["content","CbBg","img","bdi","BDI","inner","Basic"];
+	for (i = 0; i < deleteValues.length; i++)
+	{
+		description = description.replace(deleteValues[i]," ");
+	}	
+	console.log(description);
+	return description;
+}
+
+
+//Recursively get the table elements xpath
 var columnNumber = 0;
 function getTableXPath(element)
 {
@@ -618,10 +719,6 @@ function getTableXPath(element)
 	//console.log("}");
 }
 */
-//*************************************************************************************
-//********************Methods for the DOM Parsing Ends*********************************
-//*************************************************************************************
-
 
 
 // Unique ID for the className.

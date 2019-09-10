@@ -106,11 +106,10 @@ function getInfoClickedElement(elementObj)
     {	
 		//Find more relevant element either parent or child
 		var updatedElement = findElement(elementObj.target);
-		console.log("updatedElement - ", updatedElement);
+		//console.log("updatedElement - ", updatedElement);
 		
 		if(updatedElement != null && updatedElement.id != "")
 		{
-			console.log("Inside Updated Element");
 			elementID = updatedElement.id;
 			elementType = getTypeFromElement(updatedElement);
 
@@ -150,11 +149,10 @@ function getInfoClickedElement(elementObj)
 		}
 		else
         {
-			console.log("Inside Else");
 			elementID = elementObj.target.id;
 			
 			var updatedSpanElement = findSpanElement(elementObj.target.childNodes);
-			console.log("updated SPAN Element - ", updatedSpanElement);
+			//console.log("updated SPAN Element - ", updatedSpanElement);
 			
 			if(updatedSpanElement != null && updatedSpanElement.id != "")
 			{
@@ -510,13 +508,13 @@ function findChildElement(element)
 //Function to find SPAN in clicked element
 function findSpanElement(element)
 {
-	console.log("Span Element", element);
+	//console.log("Span Element", element);
 	for (var i = 0; i < element.length; i++)
 	{
 		var sibling = element[i];
 		if (sibling.nodeType != 3)
 		{
-			console.log("child span - ",sibling.tagName);
+			//console.log("child span - ",sibling.tagName);
 			if (sibling.tagName === "SPAN")
 				return sibling;
 			else
@@ -534,8 +532,6 @@ function findSpanElement(element)
 function getTypeFromElement(element)
 {
 	var type = "";
-	console.log("Element - ",element);
-	console.log("Element id - ",element.id);
 	if (document.getElementById(element.id).hasAttribute('type'))
 	{
 		type = element.getAttribute('type');

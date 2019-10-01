@@ -324,13 +324,11 @@ function getAllDomElements(element)
 					}
 					else if (sibling.tagName === "TABLE")
 					{
-						jsonTable = "";
-
-						var tableRows = $(element).find("tbody>tr");
-						//console.log("tr",  tableRows);
-						
 						var label = getLabelFromAriaLabel(sibling);
 						
+						var tableRows = $(element).find("tbody>tr");
+						//console.log("tr",  tableRows);
+						jsonTable = "";
 						getTableRows(tableRows);
 						jsonTable = jsonTable.substring(1);
 						//console.log("jsonTable", jsonTable);

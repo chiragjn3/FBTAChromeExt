@@ -202,7 +202,7 @@ window.onload = function(){
 							var _myArray = JSON.stringify(parsedData , null, 4); 
 							var vLink = document.createElement('a'),
 							vBlob = new Blob([_myArray], {type: "octet/stream"}),
-							vName = 'Element_Export.json',
+							vName = 'Dom_Export.json',
 							vUrl = window.URL.createObjectURL(vBlob);
 							vLink.setAttribute('href', vUrl);
 							vLink.setAttribute('download', vName );

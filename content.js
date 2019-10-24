@@ -115,12 +115,12 @@ function getInfoClickedElement(elementObj)
 
 			if (updatedElement.tagName === "INPUT")
 			{
-				elementAction = "input";		
+				elementAction = "SendText";		
 				elementLabel = getLabelFromElement(updatedElement);
 			}
 			else if(updatedElement.tagName === "BUTTON")
 			{
-				elementAction = "button";
+				elementAction = "Click";
 				if (updatedElement.innerText != "")
 				{
 					elementLabel = updatedElement.innerText;
@@ -132,12 +132,12 @@ function getInfoClickedElement(elementObj)
 			}
 			if (updatedElement.tagName === "A")
 			{
-				elementAction = "link";		
+				elementAction = "Link";		
 				elementLabel = updatedElement.title;
 			}
 			
 			//If element type is radio or checkbox then change action to type
-			if(elementType === "radio" || elementType === "CheckBox")
+			if(elementType.toLowerCase() === "radio" || elementType.toLowerCase() === "checkbox")
 			{
 				elementAction = elementType;
 				elementType = "";
@@ -248,7 +248,7 @@ function getAllDomElements(element)
 						var id = "";
 						var label = "";
 						var type = "";
-						var action = "input";
+						var action = "SendText";
 						
 						//console.log("Node ID" + sibling.id);
 						if (sibling.labels != null)
@@ -257,14 +257,14 @@ function getAllDomElements(element)
 							label = getLabelFromElement(sibling);
 							type = getTypeFromElement(sibling);	
 							
-							if(type === "radio" || type === "CheckBox")
+							if(type.toLowerCase() === "radio" || type.toLowerCase() === "checkbox")
 							{
 								action = type;
 								type = "";
 							}  
 							
 							//If label is empty then do not add input, but if it is checkbox or radio then add it.
-							if(label != "" || action === "radio" || action === "CheckBox")
+							if(label != "" || action.toLowerCase() === "radio" || action.toLowerCase() === "checkbox")
 							{
 								var temp = {
 										'action': action,
@@ -297,7 +297,7 @@ function getAllDomElements(element)
 						if(label != "")
 						{
 							var temp = {
-								'action': 'button',
+								'action': 'Click',
 								'id': id,
 								'label': label,
 								'type': type
@@ -307,6 +307,7 @@ function getAllDomElements(element)
 							//console.log("jsonDom", jsonDom);
 						}
 					}
+					/*
 					else if (sibling.tagName === "A")
 					{
 						var id = sibling.id;
@@ -314,16 +315,17 @@ function getAllDomElements(element)
 						var label = sibling.title;
 
 						var temp = {
-							'action': 'link',
+							'action': 'Link',
 							'id': id,
 							'label': label,
 							'type': type
 						};
 						var stringData = JSON.stringify(temp);
 						jsonDom = jsonDom + "," + stringData;
-					}
+					}*/
 					else if (sibling.tagName === "TABLE")
 					{
+						var id = sibling.id;
 						var label = getLabelFromAriaLabel(sibling);
 						
 						var tableRows = $(element).find("tbody>tr");
@@ -334,7 +336,7 @@ function getAllDomElements(element)
 						//console.log("jsonTable", jsonTable);
 
 						if (jsonTable != "")
-							jsonDom = jsonDom + ",{\"action\":\"Table\",\"label\":\"" + label + "\", \"nodes\" : [" + jsonTable + "]}";
+							jsonDom = jsonDom + ",{\"action\":\"Table\",\"id\":\"" + id + "\",\"label\":\"" + label + "\",\"type\":\"table\", \"nodes\" : [" + jsonTable + "]}";
 					}
 				}
 			}
@@ -362,7 +364,7 @@ function getTableRows(element)
 
 			jsonTableRow = jsonTableRow.substring(1);
 			if (jsonTableRow != "")
-				jsonTable = jsonTable + ",{\"action\":\"Row\",\"label\":\"" + rowCount + "\", \"nodes\" : [" + jsonTableRow + "]}";
+				jsonTable = jsonTable + ",{\"action\":\"Row\",\"label\":\"" + rowCount + "\",\"type\":\"table\", \"nodes\" : [" + jsonTableRow + "]}";
 			
 			rowCount++;
 		}
@@ -392,10 +394,10 @@ function getTableColumns(element)
 			{
 				id = sibling.id;
 				label = getLabelFromAriaLabel(sibling);
-				action = "input";
+				action = "SendText";
 				type = getTypeFromElement(sibling);
 				
-				if(type === "radio" || type === "CheckBox")
+				if(type.toLowerCase() === "radio" || type.toLowerCase() === "checkbox")
 				{
 					action = type;	
 				}
@@ -417,7 +419,7 @@ function getTableColumns(element)
 				var label = sibling.innerText;
 
 				var temp = {
-					'action': 'link',
+					'action': 'Link',
 					'id': id,
 					'label': label,
 					'type': type

@@ -12,10 +12,11 @@
 #deleteDiv{ background: #bed2e7;  }  
 #deleteDiv:hover { background: #9db1c4;}  
 
-.tableTd{ text-align: center; padding: 0; vertical-align: middle; } 
+.fa {margin-top: 3px;}
+.tableTd{ text-align: center; vertical-align: middle;} 
 .tableInput1{width:150px; border-color: #bfbfbf; border-style: solid;border-width: 1px 1px 1px 1px; padding-right:4px;padding-left: 2px;}
 .tableInput1:hover { border-color: #346187;} 
-.tableInput2{width:60px; border-color: #bfbfbf; border-style: solid;border-width: 1px 1px 1px 1px; padding-right:4px;padding-left: 2px;}
+.tableInput2{width:80px; border-color: #bfbfbf; border-style: solid;border-width: 1px 1px 1px 1px; padding-right:4px;padding-left: 2px;}
 .tableInput2:hover { border-color: #346187;} 
 .tableInput3{width:180px; border-color: #bfbfbf; border-style: solid;border-width: 1px 1px 1px 1px; padding-right:4px;padding-left: 2px;}
 .tableInput3:hover { border-color: #346187;} 
@@ -26,7 +27,7 @@
 #elementsTableHeader th{ border-width: 0px 0px 2px 0px; border-color: #d1e0ee; border-style: solid; }  
 #elementsTableBody{ margin-top: 63px; margin-bottom: 40px}
 
-.deleteSingle{display: inline-block; width: 24px; height: 24px; border-radius: 5px; text-align: center; color: #346187; font-size: 16px; cursor: pointer; line-height: 22px;   }  
+.deleteSingle{display: inline-block; width: 24px; height: 24px; border-radius: 5px;  color: #346187; font-size: 16px; cursor: pointer; line-height: 22px;   }  
 .deleteSingle:hover { background: #c4c5c6;} 
 
 #footer{ height: 36px; width: 510px; bottom: 4px; left: 5px; position: fixed; border-radius: 5px;background: #3F5161; z-index: 1000; /* opacity: 0.95; */ }

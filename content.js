@@ -130,7 +130,7 @@ function getInfoClickedElement(elementObj)
 					elementLabel = updatedElement.title;
 				}
 			}
-			if (updatedElement.tagName === "A")
+			else if (updatedElement.tagName === "A")
 			{
 				elementAction = "Link";		
 				elementLabel = updatedElement.title;
@@ -167,18 +167,24 @@ function getInfoClickedElement(elementObj)
 				elementAction = elementObj.target.tagName;
 				elementType = getTypeFromElement(elementObj.target);
 			}
+			
+			if(elementAction.toLowerCase() === "span")
+				elementAction = "SendText"; 
 
 			if(isTagTableElement(elementObj.target))
 			{
-				elementType = "table";
+				var label = findTableColumn(elementObj.target);
+				if(label != null && label != "")
+					elementLabel = label;
+				elementType = "table";	
 			} 
         }
 		
 		var elementInfo = {
-                        'action': elementAction,
-                        'id': elementID,
-						'label': elementLabel,
-                        'type': elementType
+			'action': elementAction,
+			'id': elementID,
+			'label': elementLabel,
+			'type': elementType
         };
 		return elementInfo;
     }
@@ -228,7 +234,6 @@ chrome.runtime.onMessage.addListener(
 //Get all the required elements available in DOM
 var jsonDom = "";
 var jsonTable = "";
-var jsonTableRow = "";
 function getAllDomElements(element)
 {
 	try
@@ -330,12 +335,15 @@ function getAllDomElements(element)
 						
 						var tableRows = $(element).find("tbody>tr");
 						//console.log("tr",  tableRows);
-						jsonTable = "";
-						getTableRows(tableRows);
-						jsonTable = jsonTable.substring(1);
-						//console.log("jsonTable", jsonTable);
 
-						if (jsonTable != "")
+						var jsonTableRow = rowParser(tableRows);
+						jsonTableRow = jsonTableRow.substring(1);
+						//console.log("jsonTableRow",  jsonTableRow);
+						
+						if(jsonTableRow != "")
+							jsonTable = "{\"action\":\"Row\",\"label\":\"1\",\"type\":\"table\", \"nodes\" : [" + jsonTableRow + "]}";						
+						
+						if(jsonTable != "")
 							jsonDom = jsonDom + ",{\"action\":\"Table\",\"id\":\"" + id + "\",\"label\":\"" + label + "\",\"type\":\"table\", \"nodes\" : [" + jsonTable + "]}";
 					}
 				}
@@ -349,92 +357,128 @@ function getAllDomElements(element)
     }
 }
 
-
-//Function to parse all rows of table
-function getTableRows(element)
+function rowParser(rows)
 {
 	try
-	{
-		var rowCount = 1;
-		for (var i = 0; i < element.length; i++)
+	{	
+		var jsonTableRow =  "";
+		//For first 2 rows only
+		for (var i = 0; i < 2; i++)
 		{
-			jsonTableRow = "";
-			var sibling = element[i];
-			getTableColumns(sibling.childNodes);
+			var row = rows[i];
+		    var columnList = row.childNodes;
 
-			jsonTableRow = jsonTableRow.substring(1);
-			if (jsonTableRow != "")
-				jsonTable = jsonTable + ",{\"action\":\"Row\",\"label\":\"" + rowCount + "\",\"type\":\"table\", \"nodes\" : [" + jsonTableRow + "]}";
-			
-			rowCount++;
-		}
-	}
-    catch (err)
-    {
-        console.log("Function getTableRows error - ", err.message);
-    }
-}
-
-
-//Recursively get all columns of row
-function getTableColumns(element)
-{
-	try
-	{
-		var id = "";
-		var label = "";
-		var action = "";
-		var type = "";
-
-		for (var i = 0; i < element.length; i++)
-		{
-			var sibling = element[i];
-
-			if (sibling.tagName === "INPUT")
+			for (var j = 0; j < columnList.length; j++)
 			{
-				id = sibling.id;
-				label = getLabelFromAriaLabel(sibling);
-				action = "SendText";
-				type = getTypeFromElement(sibling);
-				
-				if(type.toLowerCase() === "radio" || type.toLowerCase() === "checkbox")
+				var column = columnList[j];
+				var subRows = column.querySelectorAll(".sapMListTblSubCntRow");
+				if(subRows.length > 0)
 				{
-					action = type;	
+					for (var k = 0; k < subRows.length; k++)
+					{
+						var subRowHeader = subRows[k].querySelectorAll(".sapMListTblSubCntHdr");
+						var headerLabel = subRowHeader[0].innerText;
+						//console.log("headerLabel",headerLabel);
+						
+						var subRowValue = subRows[k].querySelectorAll(".sapMListTblSubCntVal");		
+						if(subRowValue[0].querySelectorAll("input").length > 0)
+						{
+							var action = "SendText";
+							var input =  subRowValue[0].querySelectorAll("input");
+							var id = input[0].id;
+							//console.log("inputid",id);
+						}
+						else if(subRowValue[0].querySelectorAll("span").length > 0)
+						{
+							var action = "GetText";
+							var span = subRowValue[0].querySelectorAll("span");
+							var id = span[0].id;
+							//console.log("getid", id);
+						}
+						else if(subRowValue[0].querySelectorAll("a").length > 0)
+						{
+							var action = "GetText";
+							var a = subRowValue[0].querySelectorAll("a");
+							var id = a[0].id;
+							//console.log("getid", id);
+						}
+						
+						var temp = {
+							'action': action,
+							'id': id,
+							'label': headerLabel,
+							'type': 'table'
+						};
+						var stringData = JSON.stringify(temp);
+						jsonTableRow = jsonTableRow + "," + stringData;
+					}
 				}
-				type = "table";
-				
-				var temp = {
-					'action': action,
-					'id': id,
-					'label': label,
-					'type': type
-				};
-				var stringData = JSON.stringify(temp);
-				jsonTableRow = jsonTableRow + "," + stringData;
+				else
+				{
+					var headerLabel = findTableColumn(column);
+					if(headerLabel != "" && headerLabel != "null")
+					{
+						if(column.querySelectorAll("input").length > 0)
+						{
+							var action = "SendText";
+							var input =  column.querySelectorAll("input");
+							var id = input[0].id;
+							//console.log("inputid",id);
+						}
+						else if(column.querySelectorAll("span").length > 0)
+						{
+							var action = "GetText";
+							var span = column.querySelectorAll("span");
+							var id = span[0].id;
+							//console.log("getid", id);
+						}
+						else if(column.querySelectorAll("a").length > 0)
+						{
+							var action = "GetText";
+							var a = column.querySelectorAll("a");
+							var id = a[0].id;
+							//console.log("getid", id);
+						}
+						
+						var temp = {
+							'action': action,
+							'id': id,
+							'label': headerLabel,
+							'type': 'table'
+						};
+						var stringData = JSON.stringify(temp);
+						jsonTableRow = jsonTableRow + "," + stringData;
+						
+					}
+					else
+					{
+						var input =  column.querySelectorAll("input");
+						if(input.length > 0)
+						{
+							var id = input[0].id;
+							//console.log("input eles id ",id);
+						
+							var temp = {
+								'action': 'radio',
+								'id': id,
+								'label': '',
+								'type': 'table'
+							};
+							var stringData = JSON.stringify(temp);
+							jsonTableRow = jsonTableRow + "," + stringData;
+						}
+					}
+				}	
 			}
-			else if (sibling.tagName === "A")
-			{
-				var id = sibling.id;
-				type = "table";
-				var label = sibling.innerText;
-
-				var temp = {
-					'action': 'Link',
-					'id': id,
-					'label': label,
-					'type': type
-				};
-				var stringData = JSON.stringify(temp);
-				jsonTableRow = jsonTableRow + "," + stringData;
-			}
-			getTableColumns(sibling.childNodes);
 		}
+		return jsonTableRow;
 	}
     catch (err)
     {
-        console.log("Function getTableColumns error - ", err.message);
+        console.log("Function rowParser error - ", err.message);
     }
 }
+
 
 //*************************************************************************************
 //********************Helper Methods***************************************************
@@ -450,6 +494,26 @@ function isTagTableElement(element)
         return true;
     else
         return isTagTableElement(element.parentNode);
+}
+
+//function to find table element
+function findTableColumn(element)
+{
+	if (element.tagName.toLowerCase() === "td")
+	{	
+		var header = element.headers;
+		if(header != "" && header != "undefined")
+		{
+			if(document.getElementById(header) != null)
+			{
+				return document.getElementById(header).innerText;
+			}
+			return "";
+		}
+		return "";
+	}
+    else
+        return findTableColumn(element.parentNode);
 }
 
 //function to find child or parent relevant element
